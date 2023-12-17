@@ -28,6 +28,8 @@ I have only processed French videos but this code should work with any language 
 The total processing time for about 180 videos, each from 5 to 10 minutes long, with multithreading enabled, was about 16 hours on a Ryzen 5 2600x CPU. But this process
 only needs to run once to collect all the information needed and store it in a way that can be read much, much faster.
 
+Since all the videos are about 12GB in size I can't upload them to github. They would need to be downloaded and each put in a numbered folder inside the folder "videos".
+
 # Requirements
 
 To run the processing of the videos the following libraries are required: cv2, numpy, os, multiprocessing, paddleocr.
