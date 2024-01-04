@@ -255,6 +255,9 @@ def llegir_subtitols(path): # el path es la direccio a la carpeta on estan tots 
 if __name__ == "__main__":
     #subtitols mal posats: 77 79
 
+    print("SI ESTAS SEGUR D'EXECUTAR EL PROGRAMA EDITA LA LINIA INFERIOR A AQUESTA")
+    exit()
+
     PATH = os.path.join(os.getcwd(), "videos")
 
     carpetes = os.listdir(PATH)

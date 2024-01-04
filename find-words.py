@@ -183,7 +183,7 @@ llista_paraules = funcio_fer_un_sol_cop()
 # for e in llista_paraules:
 # 	print(e.paraula, len(e.aparicions))
 # 	paraules_totals += len(e.aparicions)
-# 	if e.paraula == "soleil":
+# 	if e.paraula == "":
 # 		while True:
 # 			num = random.randint(0, len(e.aparicions)-1)
 # 			trobar_exemple(os.path.join(os.getcwd(), "videos"), e, num)
@@ -234,23 +234,13 @@ if st.button("Show random example"):
 
 
 
-# veure quantes paraules es necessiten saber per entendre el 80% de totes les paraules que es diuen
+# veure quantes paraules es necessiten saber per entendre el 90% de totes les paraules que es diuen
+
 # aux2 = 0
 # llista_paraules.reverse()
 # for i in range(len(llista_paraules)):
 # 	aux2 += len(llista_paraules[i].aparicions)
-# 	if aux2 > float(paraules_totals)*0.8:
-# 		print("numero de paraules a saber per entendre el 80%:", i)
+# 	if aux2 > float(paraules_totals)*0.9:
+# 		print("numero de paraules a saber per entendre el 90%:", i)
 # 		print(len(llista_paraules[i].aparicions))
 # 		break
-
-
-# fer prova de la funcio play_video (de moment no esta feta)
-# for f in os.listdir(os.path.join(PATH, "10")):
-# 	if ".mp4" in f:
-# 		play_video(os.path.join(PATH, "10", f), 100, 1)
-# 		print("playing video")
-
-
-
-
