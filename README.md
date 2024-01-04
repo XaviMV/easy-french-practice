@@ -21,12 +21,12 @@ also the translated sentence below.
 
 # Example
 
-https://github.com/XaviMV/easy-french-practice/assets/70759474/52fae6f5-f59c-40c3-bdd1-49766d076a08
+https://github.com/XaviMV/easy-french-practice/assets/70759474/a6efad7f-2655-49c6-998e-079e4f125c5c
 
 I have only processed French videos but this code should work with any language as long as it is supported by paddleOCR.
 
 The total processing time for about 180 videos, each from 5 to 10 minutes long, with multithreading enabled, was about 16 hours on a Ryzen 5 2600x CPU. But this process
-only needs to run once to collect all the information needed and store it in a way that can be read much, much faster.
+only needs to run once to collect all the information needed and store it in a way that can later be read much faster.
 
 Since all the videos are about 12GB in size I can't upload them to github. They would need to be downloaded and each put in a numbered folder inside the folder "videos".
 
