@@ -5,7 +5,6 @@ import os
 import time as t
 import copy
 from multiprocessing import Process
-from paddleocr import PaddleOCR, draw_ocr
 
 # aquest programa guarda una imatge per cada subtitol detectat en un video. Tambe es pot fer que llegeixi els subtitols ja generats i els guardi com a text en un fitxer .txt en el mateix directori
 
@@ -73,15 +72,12 @@ def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del v
         y += 1
 
         if y+85 > 1079:
-            return -1, -1
+        	video.close()
+        	return -1, -1
 
         subs = img_blanc_i_negre[y:y+85, 0:1920]
 
         tots_negres = True # bool que diu si tots els pixels que ens interesen son negres
-
-        if y == 840:
-            cv2.imshow("debug", subs)
-            cv2.waitKey(0)
 
         for i in range(1920): # mirar la fila superior
             for j in range(10):
@@ -100,10 +96,11 @@ def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del v
                     count_blancs += 1
 
         if tots_negres and count_blancs > 2000 and count_blancs < 20000:
-            print(count_blancs)
             trobats = True
 
-    return y, y+85
+    video.release()
+
+    return y+5, y+85+5
 
 
 def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut successful, False si hem parat el video
@@ -117,11 +114,11 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
             os.remove(os.path.join(path, i))
 
 
-    y_max_subs, y_min_subs = trobar_posicio_subtitols(path)
+    y_min_subs, y_max_subs = trobar_posicio_subtitols(path)
 
     if y_max_subs == -1 and y_min_subs == -1:
         print("PROBLEMA AMB EL VIDEO A: "+path)
-        break
+        return
 
     # read video
     
@@ -314,12 +311,9 @@ def llegir_subtitols(path): # el path es la direccio a la carpeta on estan tots 
 
 
 if __name__ == "__main__":
-    #subtitols mal posats: 77 79
-
-    trobar_posicio_subtitols("videos/6")
+    #subtitols mal posats: 77 79 (easy french)
 
     print("SI ESTAS SEGUR D'EXECUTAR EL PROGRAMA EDITA LA LINIA INFERIOR A AQUESTA")
-    exit()
 
     PATH = os.path.join(os.getcwd(), "videos")
 
@@ -328,12 +322,12 @@ if __name__ == "__main__":
     processes = []
     for i in carpetes:
         if not ("." in i): # si es una carpeta
-            p = Process(target=llegir_subtitols, args=(os.path.join(PATH, i),))
+            p = Process(target=processar_vid, args=(os.path.join(PATH, i),))
             processes.append(p)
 
 
-    num_procs = 9
-    if num_procs > 9:
+    num_procs = 4
+    if num_procs > 4:
         print("realment no fa falta fer servir mes de 9, molts processos simultanis pujen les probabilitats de que el PC peti")
         exit()
 
