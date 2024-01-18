@@ -49,6 +49,62 @@ def get_num_pixels_blancs(img): # retorna el num de pixels blancs en una imatge 
 
     return r
 
+def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del video te subtitols, normalment es aixi.
+
+    y = 780 # valor absulutament arbitrari que acabo d inventarme
+
+    for a in os.listdir(path):
+        if ".mp4" in a:
+            nom_arxiu_video = a
+
+    video = cv2.VideoCapture(os.path.join(path, nom_arxiu_video))
+
+    for i in range(15): # avança el video 15 frames
+        ret, img = video.read()
+
+    img =  cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.resize(img, (1920, 1080))
+    ret, img_blanc_i_negre = cv2.threshold(img,200,255,cv2.THRESH_BINARY) # si un pixel esta per sobre de 200 passa a ser 255, si esta per sota passa a ser 0
+
+    trobats = False
+    subs = img_blanc_i_negre[y:y+85, 0:1919]
+    while not trobats: # cada iteracio baixa la finestra 1 pixel. Es considera que s'han trobat si hi ha una fila de 10 pixels completament negres a la part superior i inferior de la finestra
+
+        y += 1
+
+        if y+85 > 1079:
+            return -1, -1
+
+        subs = img_blanc_i_negre[y:y+85, 0:1920]
+
+        tots_negres = True # bool que diu si tots els pixels que ens interesen son negres
+
+        if y == 840:
+            cv2.imshow("debug", subs)
+            cv2.waitKey(0)
+
+        for i in range(1920): # mirar la fila superior
+            for j in range(10):
+                if subs[j][i] == 255:
+                    tots_negres = False
+
+        for i in range(1920): # mirar la fila inferior
+            for j in range(73, 84):
+                if subs[j][i] == 255:
+                    tots_negres = False
+
+        count_blancs = 0
+        for i in range(1920): # mirar que per el mig hi hagi pixels blancs
+            for j in range(20, 64):
+                if subs[j][i] == 255:
+                    count_blancs += 1
+
+        if tots_negres and count_blancs > 2000 and count_blancs < 20000:
+            print(count_blancs)
+            trobats = True
+
+    return y, y+85
+
 
 def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut successful, False si hem parat el video
     fitxers = os.listdir(path)
@@ -60,6 +116,12 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
         else: # si no es .mp4
             os.remove(os.path.join(path, i))
 
+
+    y_max_subs, y_min_subs = trobar_posicio_subtitols(path)
+
+    if y_max_subs == -1 and y_min_subs == -1:
+        print("PROBLEMA AMB EL VIDEO A: "+path)
+        break
 
     # read video
     
@@ -73,7 +135,8 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
     frame = 1
     frame_ultim_canvi = 0
     temps_ini = t.time()
-    while True:
+    canvi_subtitols = 0 # aixo nomes es declara fora del while per poder fer debugging
+    while True: # per cada frame del video
         ret, img = video.read()
 
         if ret == False: # Si es el ultim frame
@@ -87,10 +150,7 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
 
         img = cv2.resize(img, (1920, 1080))
 
-
-        #img = cv2.rectangle(img, (0, 840), (1919, 925), (0,0,255), 3) # rectangle que marca els subtitols
-
-        subs = img[840:925, 0: 1919]
+        subs = img[y_min_subs:y_max_subs, 0:1920]
 
         temps1 = t.time()
 
@@ -101,12 +161,15 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
 
         temps2 = t.time()
 
-        if False:
+        if False: # fer debugging, nomes fer servir si no es processen diferents videos de forma paralela
             img = cv2.resize(img, (1280, 720))
+
+            img = cv2.putText(img, str(canvi_subtitols), (0,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 1, cv2.LINE_AA)
 
             cv2.imshow(path, img)
             cv2.imshow("subtitols", subs_blanc_i_negre)
             key = cv2.waitKeyEx(1)
+            print(canvi_subtitols)
         
         temps3 = t.time()
 
@@ -118,10 +181,10 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
 
 
         canvi_subtitols = subtitols_han_canviat(ultims_subs_blanc_i_negre, subs_blanc_i_negre)
-        if canvi_subtitols > 0.1 and frame-frame_ultim_canvi > 20: # si subtitols han canviat i ha passat suficient temps desde l'ultim canvi; guardem el subtitol i li posem com a nom els frames on apareixen
+        if canvi_subtitols > 0.5 and frame-frame_ultim_canvi > 20: # si subtitols han canviat i ha passat suficient temps desde l'ultim canvi; guardem el subtitol i li posem com a nom els frames on apareixen
             cv2.imwrite(os.path.join(path, str(frame_ultim_canvi)+"-"+str(frame)+".png"), ultims_subs)
             frame_ultim_canvi = frame
-        elif canvi_subtitols > 0.1:
+        elif canvi_subtitols > 0.5:
             frame_ultim_canvi = frame
 
 
@@ -139,10 +202,8 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
             print(temps5-temps4)
             print()
 
-        #if key != -1: # si es clica qualsevol tecla
-        #    return False
 
-def get_text(path, arxiu):
+def get_text(path, arxiu): # no la faig servir, era la forma de obtenir text amb la llibreria easyocr, paddleocr sembla que es mes rapid i millor
 
     subs = cv2.imread(os.path.join(path, arxiu))
 
@@ -179,7 +240,7 @@ def get_text_paddleocr(path, arxiu, ocr):
 
     subs = cv2.imread(os.path.join(path, arxiu))
 
-    ret, subs = cv2.threshold(subs,200,255,cv2.THRESH_BINARY) # si un pixel esta per sobre de 230 passa a ser 255, si esta per sota passa a ser 0
+    ret, subs = cv2.threshold(subs,200,255,cv2.THRESH_BINARY) # si un pixel esta per sobre de 200 passa a ser 255, si esta per sota passa a ser 0
 
     subs = (255-subs) # invertir la imatge perque les lletres siguin negres (nose si ajuda amb el ocr)
 
@@ -194,7 +255,7 @@ def get_text_paddleocr(path, arxiu, ocr):
     if type(text_[0]) != list:
         return ""
 
-    if len(text_[0]) > 1:
+    if len(text_[0]) > 1: # si es detecta mes de 1 frase
         return "?"
 
 
@@ -254,6 +315,8 @@ def llegir_subtitols(path): # el path es la direccio a la carpeta on estan tots 
 
 if __name__ == "__main__":
     #subtitols mal posats: 77 79
+
+    trobar_posicio_subtitols("videos/6")
 
     print("SI ESTAS SEGUR D'EXECUTAR EL PROGRAMA EDITA LA LINIA INFERIOR A AQUESTA")
     exit()
