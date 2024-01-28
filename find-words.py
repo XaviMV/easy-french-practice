@@ -113,6 +113,7 @@ def trobar_exemple(path_ini, p, num_aparicio):
 	frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 	st.image(frame)
 
+
 	# cv2.imshow("img", frame)
 	# cv2.waitKey()
 
@@ -244,3 +245,5 @@ if st.button("Show random example"):
 # 		print("numero de paraules a saber per entendre el 90%:", i)
 # 		print(len(llista_paraules[i].aparicions))
 # 		break
+
+
