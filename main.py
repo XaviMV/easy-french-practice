@@ -5,6 +5,7 @@ import os
 import time as t
 import copy
 from multiprocessing import Process
+from paddleocr import PaddleOCR, draw_ocr
 
 # aquest programa guarda una imatge per cada subtitol detectat en un video. Tambe es pot fer que llegeixi els subtitols ja generats i els guardi com a text en un fitxer .txt en el mateix directori
 
@@ -48,7 +49,7 @@ def get_num_pixels_blancs(img): # retorna el num de pixels blancs en una imatge 
 
     return r
 
-def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del video te subtitols, normalment es aixi.
+def trobar_posicio_subtitols(path, num_frame): # busca a on es troben els subtitols
 
     y = 780 # valor absulutament arbitrari que acabo d inventarme
 
@@ -58,8 +59,11 @@ def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del v
 
     video = cv2.VideoCapture(os.path.join(path, nom_arxiu_video))
 
-    for i in range(15): # avança el video 15 frames
+    for i in range(num_frame): # avança el video "num_frame" frames
         ret, img = video.read()
+
+    if num_frame > 1000: # no es troben els subtitols
+        return -1, -1
 
     img =  cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.resize(img, (1920, 1080))
@@ -71,9 +75,9 @@ def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del v
 
         y += 1
 
-        if y+85 > 1079:
-        	video.close()
-        	return -1, -1
+        if y+85 > 1000:
+            video.release()
+            return trobar_posicio_subtitols(path, num_frame+50)
 
         subs = img_blanc_i_negre[y:y+85, 0:1920]
 
@@ -106,6 +110,8 @@ def trobar_posicio_subtitols(path): # nomes funciona si el frame numero 15 del v
 def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut successful, False si hem parat el video
     fitxers = os.listdir(path)
 
+    temps_ini = t.time()
+
     nom_arxiu_video = ""
     for i in fitxers: # per cada fitxer
         if i[len(i)-4:len(i)] == ".mp4":
@@ -114,7 +120,7 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
             os.remove(os.path.join(path, i))
 
 
-    y_min_subs, y_max_subs = trobar_posicio_subtitols(path)
+    y_min_subs, y_max_subs = trobar_posicio_subtitols(path, 15)
 
     if y_max_subs == -1 and y_min_subs == -1:
         print("PROBLEMA AMB EL VIDEO A: "+path)
@@ -131,7 +137,6 @@ def processar_vid(path): # el path es la carpeta on esta el video, True ha sigut
     ultims_subs = 0
     frame = 1
     frame_ultim_canvi = 0
-    temps_ini = t.time()
     canvi_subtitols = 0 # aixo nomes es declara fora del while per poder fer debugging
     while True: # per cada frame del video
         ret, img = video.read()
@@ -311,9 +316,9 @@ def llegir_subtitols(path): # el path es la direccio a la carpeta on estan tots 
 
 
 if __name__ == "__main__":
-    #subtitols mal posats: 77 79 (easy french)
 
     print("SI ESTAS SEGUR D'EXECUTAR EL PROGRAMA EDITA LA LINIA INFERIOR A AQUESTA")
+    exit()
 
     PATH = os.path.join(os.getcwd(), "videos")
 
@@ -322,12 +327,12 @@ if __name__ == "__main__":
     processes = []
     for i in carpetes:
         if not ("." in i): # si es una carpeta
-            p = Process(target=processar_vid, args=(os.path.join(PATH, i),))
+            p = Process(target=llegir_subtitols, args=(os.path.join(PATH, i),))
             processes.append(p)
 
 
-    num_procs = 4
-    if num_procs > 4:
+    num_procs = 8
+    if num_procs > 8:
         print("realment no fa falta fer servir mes de 9, molts processos simultanis pujen les probabilitats de que el PC peti")
         exit()
 

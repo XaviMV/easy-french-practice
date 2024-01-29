@@ -48,12 +48,17 @@ def buscar_paraules(path, carpeta, diccionari): # path apunta al directori amb l
 
 	fitxer = open(path)
 
+	num_subtitols_mal_llegits = 0
+
 	while True: # cada iteracio es una linia del document .txt
 
 		linia = fitxer.readline()
 
 		if linia == "":
 			break
+
+		if linia.endswith("# \n") or linia.endswith("# ?\n"):
+			num_subtitols_mal_llegits += 1
 
 		buff = "" # guarda les paraules temporalment
 		frames = ""
@@ -77,11 +82,13 @@ def buscar_paraules(path, carpeta, diccionari): # path apunta al directori amb l
 				
 				elif ord(c) > 96 and (ord(c) < 123 or ord(c) > 191):
 					buff += c
+	if num_subtitols_mal_llegits > 50:
+		print(carpeta, num_subtitols_mal_llegits)
 
 	return diccionari
 
 
-def trobar_exemple(path_ini, p, num_aparicio):
+def trobar_exemple(path_ini, p, num_aparicio): # troba el frame de l'apariciói el mostra
 
 	carpeta, frames = p.aparicions[num_aparicio].carpeta, p.aparicions[num_aparicio].frames
 
@@ -118,12 +125,8 @@ def trobar_exemple(path_ini, p, num_aparicio):
 	# cv2.waitKey()
 
 
-def play_video(path, frame_ini, frame_fi):
 
-	# create video object
-	return 0
-
-def get_segons(frames, path_video):
+def get_segons(frames, path_video): # donat uns frames i video dona el minut i segon on apareixen
 
 	video = cv2.VideoCapture(path_video);
 
@@ -188,7 +191,6 @@ llista_paraules = funcio_fer_un_sol_cop()
 # 		while True:
 # 			num = random.randint(0, len(e.aparicions)-1)
 # 			trobar_exemple(os.path.join(os.getcwd(), "videos"), e, num)
-
 
 
 
